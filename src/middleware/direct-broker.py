@@ -1,6 +1,6 @@
 import zmq
-from .publisher import Publisher
-from .subscriber import Subscriber
+from publisher import Publisher
+from subscriber import Subscriber
 
 
 class DirectBroker:
