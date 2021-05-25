@@ -2,11 +2,12 @@ from datetime import datetime
 import time
 import zmq
 
-port = "5556"
+port = "5559"
 
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
-socket.bind("tcp://*:" + port)
+#Pub socket now 'connects' to a port rather than being bound to it; broker owns the port
+socket.connect("tcp://localhost:" + port)
 
 while True:
     socket.send_string("Time Sent: " + str(datetime.now()))
