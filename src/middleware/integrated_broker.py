@@ -1,14 +1,13 @@
 import zmq
 from .publisher import Publisher
 from .subscriber import Subscriber
-from .killswitch_activator import KillswitchActivator
 
 
-class IntegratedBroker(KillswitchActivator):
+class IntegratedBroker():
+    # TODO: (I think) this implementation is wrong. the ID's are supposed to be IP address with network port
     def __init__(self):
         self.upstream_port = '5561'
         self.downstream_port = '5562'
-        self.killswitch_port = '5563'
         self.context = zmq.Context()
 
         self.upstream = self.context.socket(zmq.XSUB)
@@ -17,33 +16,22 @@ class IntegratedBroker(KillswitchActivator):
         self.downstream = self.context.socket(zmq.XPUB)
         self.downstream.bind(f'tcp://*:{self.downstream_port}')
 
-        KillswitchActivator.__init__(
-            self,
-            self.context,
-            self.killswitch_port,
-            [self.upstream, self.downstream]
-        )
-
         self.publishers = dict()
-        self.subscribers = []
-
-    # TODO: vvvv this probably should be moved into a class under "public"
+        self.subscribers = dict()
 
     def add_publisher(self, id: str):
-        publisher = Publisher(id, self.downstream_port, self.killswitch_port)
+        publisher = Publisher(id, self.downstream_port)
         self.publishers[id] = publisher
 
-    def add_subscriber(self, id: str, topic: str):
-        subscriber = Subscriber(
-            id,
-            self.downstream_port,
-            topic,
-            self.killswitch_port
-        )
-        self.subscribers.append(subscriber)
+    def add_subscriber(self, id: str):
+        subscriber = Subscriber(id, self.downstream_port)
+        self.subscribers[id] = subscriber
 
     def publish(self, id: str, topic: str, value: str):
         self.publishers[id].publish(topic, value)
+
+    def subscribe(self, id: str, topic: str):
+        self.subscribers[id].subscribe(topic)
 
     def __del__(self):
         self.subscribers.clear()
