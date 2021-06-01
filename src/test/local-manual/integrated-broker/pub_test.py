@@ -1,4 +1,4 @@
-from app.client.publisher import Publisher
+from app.client.publisher.publisher import Publisher
 import sys
 
 id = sys.argv[1]

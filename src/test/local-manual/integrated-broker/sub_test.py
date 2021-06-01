@@ -1,17 +1,18 @@
 import sys
-from app.client.subscriber import Subscriber
+from app.client.host import Host
 
 id = sys.argv[1]
 
-sub = Subscriber(id)
+sub = Host()
+sub.add_subscriber(id)
 
 if id == '4':
-    sub.subscribe('x')
-    sub.subscribe('y')
-    sub.subscribe('z')
+    sub.subscribe(id, 'x')
+    sub.subscribe(id, 'y')
+    sub.subscribe(id, 'z')
 elif id == '5':
-    sub.subscribe('x')
+    sub.subscribe(id, 'x')
 elif id == '6':
-    sub.subscribe('z')
+    sub.subscribe(id, 'z')
 
-sub.recv_message()
+# sub.recv_message()

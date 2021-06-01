@@ -8,14 +8,12 @@ class IntegratedBroker(Broker):
         super().__init__()
         self.context = zmq.Context()
 
-        self.upstream = self.context.socket(zmq.SUB)
+        self.upstream = self.context.socket(zmq.XSUB)
         self.upstream.bind(f'tcp://*:{UPSTREAM_PORT}')
-        self.upstream.setsockopt_string(zmq.SUBSCRIBE, '')
 
-        self.downstream = self.context.socket(zmq.PUB)
+        self.downstream = self.context.socket(zmq.XPUB)
         self.downstream.bind(f'tcp://*:{DOWNSTREAM_PORT}')
-
-        zmq.device(zmq.FORWARDER, self.downstream, self.upstream)
+        zmq.proxy(self.upstream, self.downstream)
 
     def __del__(self):
         self.downstream.close()

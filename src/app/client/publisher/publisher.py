@@ -1,5 +1,5 @@
 import zmq
-from ..common.config import UPSTREAM_PORT
+from ...common.config import UPSTREAM_PORT
 
 
 class Publisher():

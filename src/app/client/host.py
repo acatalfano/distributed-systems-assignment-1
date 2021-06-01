@@ -1,5 +1,10 @@
-from .subscriber import Subscriber
-from .publisher import Publisher
+from .subscriber.subscriber import Subscriber
+from .publisher.publisher import Publisher
+
+
+'''
+A host can be both a subscriber and publisher
+'''
 
 
 class Host:
