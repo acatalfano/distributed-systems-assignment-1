@@ -1,11 +1,12 @@
 import zmq
+from ..common.config import UPSTREAM_PORT
 
 
-class DirectPublisher():
-    def __init__(self, id: str, port: str):
+class Publisher():
+    def __init__(self, id: str):
         self.context = zmq.Context()
         self.pub_socket = self.context.socket(zmq.PUB)
-        self.pub_socket.bind(f'tcp://*:{port}')
+        self.pub_socket.connect(f'tcp://localhost:{UPSTREAM_PORT}')
 
     def publish(self, topic: str, value: str):
         self.pub_socket.send_multipart(

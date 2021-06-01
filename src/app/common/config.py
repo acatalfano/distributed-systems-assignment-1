@@ -1,0 +1,2 @@
+UPSTREAM_PORT: str = '5561'
+DOWNSTREAM_PORT: str = '5562'
