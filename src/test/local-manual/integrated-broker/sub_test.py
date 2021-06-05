@@ -1,20 +1,20 @@
 import sys
 from src.app.client.host import Host
 
-id = sys.argv[1]
+host_id = sys.argv[1]
 
 sub = Host()
-sub.add_subscriber(id)
+sub.add_subscriber(host_id)
 
-if id == '4':
-    sub.subscribe(id, 'x')
-    sub.subscribe(id, 'y')
-    sub.subscribe(id, 'z')
-    print('executed 4')
-elif id == '5':
-    sub.subscribe(id, 'x')
-elif id == '6':
-    sub.subscribe(id, 'z')
+if host_id == '4':
+    sub.subscribe(host_id, 'x')
+    sub.subscribe(host_id, 'y')
+    sub.subscribe(host_id, 'z')
+elif host_id == '5':
+    sub.subscribe(host_id, 'x')
+elif host_id == '6':
+    sub.subscribe(host_id, 'z')
 else:
     print('nothing executed')
-# sub.recv_message()
+
+sub.spin_subscriber(host_id)

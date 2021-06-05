@@ -25,3 +25,6 @@ class Host:
 
     def subscribe(self, id: str, topic: str) -> None:
         self.subscribers[id].subscribe(topic)
+
+    def spin_subscriber(self, id: str) -> None:
+      self.subscribers[id].recv_message()

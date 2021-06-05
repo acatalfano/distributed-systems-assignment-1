@@ -1,20 +1,21 @@
-from src.app.client.publisher.publisher import Publisher
 import sys
+from src.app.client.host import Host
 
-testId = sys.argv[1]
+host_id = sys.argv[1]
 
-pub = Publisher(testId)
+pub = Host()
+pub.add_publisher(host_id)
 
-if testId == '1':
+if host_id == '1':
     input('publish(1, x, first message x)')
-    pub.publish('x', 'first message x')
+    pub.publish(id=host_id, topic='x', value='first message x')
     input('publish(1, y, first message y)')
-    pub.publish('y', 'first message y')
-elif testId == '2':
+    pub.publish(id=host_id, topic='y', value='first message y')
+elif host_id == '2':
     input('publish(2, x, second message x)')
-    pub.publish('x', 'second message x')
-elif testId == '3':
+    pub.publish(id=host_id, topic='x', value='second message y')
+elif host_id == '3':
     input('publish(3, z, first message z)')
-    pub.publish('z', 'first message z')
+    pub.publish(id=host_id, topic='z', value='first message z')
 
 print('done')
