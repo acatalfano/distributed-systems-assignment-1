@@ -1,4 +1,4 @@
-import sys
+import sys, time
 from src.app.client.host import Host
 
 host_id = sys.argv[1]
@@ -10,6 +10,10 @@ if host_id == '4':
     sub.subscribe(host_id, 'x')
     sub.subscribe(host_id, 'y')
     sub.subscribe(host_id, 'z')
+    time.sleep(10)
+    print('done sleeping')
+
+
 elif host_id == '5':
     sub.subscribe(host_id, 'x')
 elif host_id == '6':
@@ -18,3 +22,5 @@ else:
     print('nothing executed')
 
 sub.spin_subscriber(host_id)
+sub.subscribe(host_id, 'a')
+print('added a')

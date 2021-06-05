@@ -15,6 +15,8 @@ elif host_id == '2':
     input('publish(2, x, second message x)')
     pub.publish(id=host_id, topic='x', value='second message y')
 elif host_id == '3':
+    input('publish(3, a, first message a)')
+    pub.publish(id=host_id, topic='a', value='first message a')
     input('publish(3, z, first message z)')
     pub.publish(id=host_id, topic='z', value='first message z')
 

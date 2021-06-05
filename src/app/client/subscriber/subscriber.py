@@ -1,4 +1,4 @@
-import zmq
+import zmq, threading
 from ...common.config import DOWNSTREAM_PORT
 
 
@@ -13,6 +13,10 @@ class Subscriber():
         #           ...not a zmq limitation, it's b/c as-is, it's a single thread that blocks on an infinite loop
         #           probably want to do something with an extra socket (plus zmq.Poller) or threading manually
         # self.recv_message()
+
+    # Looking into adding threading for subscribing after messages are received
+    def subscribe_topic(self, topic):
+        self.subscribe(topic)
 
     def subscribe(self, topic: str):
         self.sub_socket.setsockopt(zmq.SUBSCRIBE, bytes(topic, 'ascii'))
