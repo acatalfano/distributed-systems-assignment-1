@@ -1,4 +1,5 @@
-import sys, time
+import sys
+import time
 from src.app.client.host import Host
 
 host_id = sys.argv[1]
@@ -21,6 +22,6 @@ elif host_id == '6':
 else:
     print('nothing executed')
 
-sub.spin_subscriber(host_id)
+sub.subscribers[host_id].recv_message()
 sub.subscribe(host_id, 'a')
 print('added a')

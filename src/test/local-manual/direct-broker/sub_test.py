@@ -1,8 +1,19 @@
 import sys
-from src.app.client.host import Host
+from app.client.host import Host
 
 id = sys.argv[1]
 sub = Host()
 sub.add_subscriber(id)
 
-# TODO: implement Subscriber for direct broker; this may be redundant but I'm not sure yet
+if id == '4':
+    sub.subscribe(id, 'x')
+    sub.subscribe(id, 'y')
+    sub.subscribe(id, 'z')
+
+elif id == '5':
+    sub.subscribe(id, 'x')
+
+elif id == '6':
+    sub.subscribe(id, 'z')
+
+sub.subscribers[id]._spin()

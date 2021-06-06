@@ -1,6 +1,7 @@
-import zmq, sys
+import zmq
+import sys
 from .broker import Broker
-from ..common.config import UPSTREAM_PORT, DOWNSTREAM_PORT
+from ..common.indirect_config import UPSTREAM_PORT, DOWNSTREAM_PORT
 
 
 class IntegratedBroker(Broker):
@@ -14,13 +15,14 @@ class IntegratedBroker(Broker):
 
         self.downstream = self.context.socket(zmq.XPUB)
         self.downstream.bind(f'tcp://*:{DOWNSTREAM_PORT}')
+        self._start()
 
     def __del__(self):
         self.downstream.close()
         self.upstream.close()
         self.context.term()
 
-    def start(self):
+    def _start(self):
         try:
             zmq.proxy(self.upstream, self.downstream)
         except:

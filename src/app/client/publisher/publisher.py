@@ -1,18 +1,10 @@
-import zmq
-from ...common.config import UPSTREAM_PORT
+from abc import ABC, abstractmethod
 
 
-class Publisher():
-    def __init__(self, id: str):
-        self.context = zmq.Context()
-        self.pub_socket = self.context.socket(zmq.PUB)
-        self.pub_socket.connect(f'tcp://localhost:{UPSTREAM_PORT}')
+class Publisher(ABC):
+    def __init__(self, id: str = None):
+        self.id = id
 
-    def publish(self, topic: str, value: str):
-        self.pub_socket.send_multipart(
-            [bytes(topic, 'ascii'), bytes(value, 'ascii')]
-        )
-
-    def __del__(self):
-        self.pub_socket.close()
-        self.context.term()
+    @abstractmethod
+    def publish(self, topic: str, value: str) -> None:
+        pass

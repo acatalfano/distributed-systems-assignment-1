@@ -1,23 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+
+# TODO: need to also add a "connect" port (and "connect" method for host) so it can get a response to know
+#       if config is DIRECT or INDIRECT
 
 
 class Broker(ABC):
+    # TODO: implement the "connect" port logic here (described above)
     pass
-    # def __init__(self) -> None:
-    #     super().__init__()
-
-    # @abstractmethod
-    # def add_publisher(self, network_identifier: str) -> None:
-    #     pass
-
-    # @abstractmethod
-    # def add_subscriber(self, network_identifier: str) -> None:
-    #     pass
-
-    # @abstractmethod
-    # def publish(self, network_identifier: str, topic: str, value: str) -> None:
-    #     pass
-
-    # @abstractmethod
-    # def subscribe(self, network_identifier: str, topic: str) -> None:
-    #     pass
