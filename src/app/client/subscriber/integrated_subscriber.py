@@ -1,38 +1,47 @@
 import zmq
+from threading import Thread
 from ...common.indirect_config import DOWNSTREAM_PORT
 from .subscriber import Subscriber
 
 
 class IntegratedSubscriber(Subscriber):
-    def __init__(self, id: str):
-        super().__init__(id)
-        self.context = zmq.Context()
-        self.sub_socket = self.context.socket(zmq.SUB)
-        self.sub_socket.connect(f'tcp://localhost:{DOWNSTREAM_PORT}')
-        self.spin = True
-        # TODO: currently only works if you only do all you "subscribe(topic)" calls before "recv_message()"
-        #           ideally, you should be able to add subscriptions after "recv_message()" is spinning
-        #           ...not a zmq limitation, it's b/c as-is, it's a single thread that blocks on an infinite loop
-        #           probably want to do something with an extra socket (plus zmq.Poller) or threading manually
-        # self.recv_message()
+    @property
+    def _background_thread(self) -> Thread:
+        background_thread = BackgroundThread(self._new_sub_endpoint)
+        return Thread(target=background_thread.spin)
 
-    # Looking into adding threading for subscribing after messages are received
-    def subscribe_topic(self, topic):
-        self.subscribe(topic)
 
-    def subscribe(self, topic: str) -> None:
-        self.sub_socket.setsockopt(zmq.SUBSCRIBE, bytes(topic, 'ascii'))
+class BackgroundThread:
+    def __init__(self, new_sub_endpoint: str) -> None:
+        self.__new_sub_endpoint = new_sub_endpoint
 
-    # TODO: this should be internal at some point (and prefixed with underscore to denote private-ish)
-    def recv_message(self):
-        # TODO: remove all these print()'s when done w/ that level of sanity-debugging
-        print('receiving messages')
-        # TODO: something other than infinite loop (kill signal from broker? -- or is it okay to be simple for now?)
-        while self.spin:
-            [_, msg] = self.sub_socket.recv_multipart()
-            print(f'{msg}')
+    def spin(self) -> None:
+        receive_new_sub_socket, sub_socket = self.__build_sockets()
+        try:
+            poller = zmq.Poller()
+            poller.register(receive_new_sub_socket, zmq.POLLIN)
+            poller.register(sub_socket, zmq.POLLIN)
+            while True:
+                socks = dict(poller.poll())
+                if socks.get(receive_new_sub_socket) == zmq.POLLIN:
+                    topic = receive_new_sub_socket.recv_string()
+                    sub_socket.setsockopt_string(zmq.SUBSCRIBE, topic)
+                if socks.get(sub_socket) == zmq.POLLIN:
+                    [topic, msg] = sub_socket.recv_multipart()
+                    # TODO: swap for notify callback
+                    print(f'{topic}: {msg}')
+        except Exception as e:
+            if type(e) is not zmq.ContextTerminated:
+                print('unexpected exception', e)
+        finally:
+            receive_new_sub_socket.close()
+            sub_socket.close()
 
-    def __del__(self):
-        self.spin = False
-        self.sub_socket.close()
-        self.context.term()
+    def __build_sockets(self) -> tuple[zmq.Socket, zmq.Socket]:
+        receive_new_sub_socket = zmq.Context.instance().socket(zmq.PAIR)
+        receive_new_sub_socket.connect(f'inproc://{self.__new_sub_endpoint}')
+
+        sub_socket = zmq.Context.instance().socket(zmq.SUB)
+        sub_socket.connect(f'tcp://localhost:{DOWNSTREAM_PORT}')
+
+        return receive_new_sub_socket, sub_socket

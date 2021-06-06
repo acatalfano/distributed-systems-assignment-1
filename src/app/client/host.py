@@ -12,42 +12,36 @@ A host can be both a subscriber and publisher
 
 class Host:
     def __init__(self):
-        self.subscribers = dict()
-        self.publishers = dict()
-        self._broker_mode = None
+        self.__subscribers: dict[str, Subscriber] = dict()
+        self.__publishers: dict[str, Publisher] = dict()
+        self.__broker_mode_value = None
 
     # TODO: the id's should actually be returned by the broker when adding a sub or pub
     def add_publisher(self, id: str) -> None:
-        publisher = self.publisher_factory.create(id)
-        self.publishers[id] = publisher
+        publisher = self.__publisher_factory.create(id)
+        self.__publishers[id] = publisher
 
     def add_subscriber(self, id: str) -> None:
-        subscriber = self.subscriber_factory.create(id)
-        self.subscribers[id] = subscriber
+        subscriber = self.__subscriber_factory.create(id)
+        self.__subscribers[id] = subscriber
 
     def publish(self, id: str, topic: str, value) -> None:
-        self.get_publisher(id).publish(topic, value)
+        self.__publishers[id].publish(topic, value)
 
     def subscribe(self, id: str, topic: str) -> None:
-        self.get_subscriber(id).subscribe(topic)
-
-    def get_subscriber(self, id: str) -> Subscriber:
-        return self.subscribers[id]
-
-    def get_publisher(self, id: str) -> Publisher:
-        return self.publishers[id]
+        self.__subscribers[id].subscribe(topic)
 
     @property
-    def broker_mode(self) -> BrokerMode:
-        if self._broker_mode is None:
+    def __broker_mode(self) -> BrokerMode:
+        if self.__broker_mode_value is None:
             # TODO: instead of hardcoded, talk to the broker to get the BrokerMode
-            self._broker_mode = BrokerMode.DIRECT
-        return self._broker_mode
+            self.__broker_mode_value = BrokerMode.DIRECT
+        return self.__broker_mode_value
 
     @property
-    def subscriber_factory(self) -> SubscriberFactory:
-        return SubscriberFactory(self.broker_mode)
+    def __subscriber_factory(self) -> SubscriberFactory:
+        return SubscriberFactory(self.__broker_mode)
 
     @property
-    def publisher_factory(self) -> PublisherFactory:
-        return PublisherFactory(self.broker_mode)
+    def __publisher_factory(self) -> PublisherFactory:
+        return PublisherFactory(self.__broker_mode)

@@ -1,4 +1,6 @@
 import zmq
+from threading import Thread
+
 from .subscriber import Subscriber
 from ...common.direct_config import DISSEMINATE_PUB_PORT, REGISTER_SUB_PORT, BROKER_IP, PUBLISHER_PORT
 
@@ -6,70 +8,99 @@ from ...common.direct_config import DISSEMINATE_PUB_PORT, REGISTER_SUB_PORT, BRO
 # TODO: are the IP addresses right? is broker supposed to bind to "localhost" or "*" ?
 
 class DirectSubscriber(Subscriber):
-    def __init__(self):
-        super().__init__()
-        self._context = zmq.Context()
-        self._init_disseminate_pub_socket()
-        self._init_register_sub_socket()
-        self._subscription_sockets: list[zmq.Socket] = []
-        self._register_subscriber()
+    @property
+    def _background_thread(self) -> Thread:
+        background_thread = BackgroundThread(self._new_sub_endpoint)
+        return Thread(target=background_thread.run_background_thread)
 
-    def subscribe(self, topic: str) -> None:
-        for socket in self._subscription_sockets:
-            socket.setsockopt_string(zmq.SUBSCRIBE, topic)
 
-    def _init_disseminate_pub_socket(self):
-        self._disseminate_pub_socket = self._context.socket(zmq.SUB)
-        self._disseminate_pub_socket.connect(
+class BackgroundThread:
+    def __init__(self, new_sub_endpoint: str):
+        self.__new_sub_endpoint = new_sub_endpoint
+        self.__subscription_sockets: list[zmq.Socket] = []
+        self.__subscribed_topics: list[str] = []
+
+    def run_background_thread(self) -> None:
+        try:
+            self.__register_subscriber()
+            self.__spin()
+        except Exception as e:
+            if type(e) is not zmq.ContextTerminated:
+                print('unexpected exception', e)
+        finally:
+            for socket in self.__subscription_sockets:
+                socket.close()
+
+    def __register_subscriber(self) -> None:
+        register_sub_socket = zmq.Context.instance().socket(zmq.REQ)
+        try:
+            register_sub_socket.connect(
+                f'tcp://{BROKER_IP}:{REGISTER_SUB_PORT}')
+
+            register_sub_socket.send(b'')
+            addresses_str: str = register_sub_socket.recv_string()
+            pub_addresses = filter(
+                lambda address: len(address) > 0,
+                addresses_str.split(',')
+            )
+            for address in pub_addresses:
+                sub_socket = zmq.Context.instance().socket(zmq.SUB)
+                sub_socket.connect(f'tcp://{address}')
+                # sub_socket.connect(f'tcp://{address}:{PUBLISHER_PORT}')
+                self.__subscription_sockets.append(sub_socket)
+        finally:
+            register_sub_socket.close()
+
+    def __build_sockets(self) -> None:
+        self.__receive_new_sub_socket = zmq.Context.instance().socket(zmq.PAIR)
+        self.__receive_new_sub_socket.connect(
+            f'inproc://{self.__new_sub_endpoint}')
+
+        self.__disseminate_pub_socket = zmq.Context.instance().socket(zmq.SUB)
+        self.__disseminate_pub_socket.connect(
             f'tcp://{BROKER_IP}:{DISSEMINATE_PUB_PORT}')
 
-    def _init_register_sub_socket(self):
-        self._register_sub_socket = self._context.socket(zmq.REQ)
-        self._register_sub_socket.connect(
-            f'tcp://{BROKER_IP}:{REGISTER_SUB_PORT}')
+    def __spin(self) -> None:
+        self.__build_sockets()
 
-    def _register_subscriber(self):
-        self._register_sub_socket.send(b'')
-        addresses_str: str = self._register_sub_socket.recv_string()
-        pub_addresses = filter(
-            lambda address: len(address) > 0,
-            addresses_str.split(',')
-        )
-        for address in pub_addresses:
-            sub_socket = self._context.socket(zmq.SUB)
-            sub_socket.connect(f'tcp://{address}')
-            # sub_socket.connect(f'tcp://{address}:{PUBLISHER_PORT}')
-            self._subscription_sockets.append(sub_socket)
-        self._register_sub_socket.close()
-        # self._spin()
-
-    def _spin(self) -> None:
         poller = zmq.Poller()
-        poller.register(self._disseminate_pub_socket, zmq.POLLIN)
-        for sub in self._subscription_sockets:
+        poller.register(self.__receive_new_sub_socket, zmq.POLLIN)
+        poller.register(self.__disseminate_pub_socket, zmq.POLLIN)
+        for sub in self.__subscription_sockets:
             poller.register(sub, zmq.POLLIN)
+
         while True:
             socks = dict(poller.poll())
-            if socks.get(self._disseminate_pub_socket) == zmq.POLLIN:
-                self._add_subscription()
+            if socks.get(self.__disseminate_pub_socket) == zmq.POLLIN:
+                new_sub_socket = self.__add_sub_connection()
+                self.__subscribe_to_all_topics(new_sub_socket)
 
-            for sub in self._subscription_sockets:
+                # register new socket and store in running list
+                poller.register(new_sub_socket, zmq.POLLIN)
+                self.__subscription_sockets.append(new_sub_socket)
+
+            if socks.get(self.__receive_new_sub_socket) == zmq.POLLIN:
+                topic: str = self.__receive_new_sub_socket.recv_string()
+                self.__subscribe_on_all_sockets(topic)
+                # add topic to running list
+                self.__subscribed_topics.append(topic)
+
+            for sub in self.__subscription_sockets:
                 if socks.get(sub) == zmq.POLLIN:
-                    _, message = sub.recv_multipart()
-                    print(message)
-                    # TODO: notify client of the message somehow
+                    topic, message = sub.recv_multipart()
+                    # TODO: swap for notify callback
+                    print(f'{topic}: {message}')
 
-    def _add_subscription(self):
-        new_address = self._disseminate_pub_socket.recv_string()
-        new_subscription = self._context.socket(zmq.SUB)
+    def __add_sub_connection(self) -> zmq.Socket:
+        new_address = self.__disseminate_pub_socket.recv_string()
+        new_subscription = zmq.Context.instance().socket(zmq.SUB)
         new_subscription.connect(f'tcp://{new_address}')
-        print(f'connected to socket at tcp://{new_address}')
-        # new_subscription.connect(
-        #     f'tcp://{new_address}:{PUBLISHER_PORT}')
-        self._subscription_sockets.append(new_subscription)
+        return new_subscription
 
-    def __del__(self):
-        self._disseminate_pub_socket.close()
-        for socket in self._subscription_sockets:
-            socket.close()
-        self._context.term()
+    def __subscribe_to_all_topics(self, new_sub_socket: zmq.Socket) -> None:
+        for topic in self.__subscribed_topics:
+            new_sub_socket.setsockopt_string(zmq.SUBSCRIBE, topic)
+
+    def __subscribe_on_all_sockets(self, topic: str) -> None:
+        for socket in self.__subscription_sockets:
+            socket.setsockopt_string(zmq.SUBSCRIBE, topic)

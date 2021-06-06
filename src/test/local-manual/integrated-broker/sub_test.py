@@ -22,6 +22,6 @@ elif host_id == '6':
 else:
     print('nothing executed')
 
-sub.subscribers[host_id].recv_message()
+# sub.subscribers[host_id].recv_message()
 sub.subscribe(host_id, 'a')
 print('added a')
