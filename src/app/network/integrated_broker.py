@@ -1,5 +1,4 @@
 import zmq
-import sys
 from .broker import Broker
 from ..common.indirect_config import UPSTREAM_PORT, DOWNSTREAM_PORT
 
@@ -25,7 +24,6 @@ class IntegratedBroker(Broker):
     def _start(self):
         try:
             zmq.proxy(self.upstream, self.downstream)
-        except:
-            e = sys.exc_info()[0]
-            print('Exiting execution, error: ' + e)
+        except Exception as e:
+            print('Exiting execution, error: ', e)
             self.__del__()

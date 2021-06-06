@@ -1,6 +1,6 @@
 import sys
 import time
-from src.app.client.host import Host
+from app.client.host import Host
 
 host_id = sys.argv[1]
 
