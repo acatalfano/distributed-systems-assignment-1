@@ -14,14 +14,14 @@ class IntegratedBroker(Broker):
 
         self.downstream = self.context.socket(zmq.XPUB)
         self.downstream.bind(f'tcp://*:{DOWNSTREAM_PORT}')
-        self._start()
+        self.__start()
 
     def __del__(self):
         self.downstream.close()
         self.upstream.close()
         self.context.term()
 
-    def _start(self):
+    def __start(self):
         try:
             zmq.proxy(self.upstream, self.downstream)
         except Exception as e:
