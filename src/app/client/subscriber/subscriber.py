@@ -1,11 +1,13 @@
 from threading import Thread
+from typing import Callable
 import zmq
 from abc import ABC, abstractmethod
 
 
 class Subscriber(ABC):
-    def __init__(self, id: str = None):
-        self.id = id
+    def __init__(self, callback: Callable[[str, str], None], id: str = None):
+        self._callback = callback
+        self.__id = id
         self.__context = zmq.Context.instance()
         self._new_sub_endpoint = 'subscribe'
         self.__send_new_sub_socket = self.__context.socket(zmq.PAIR)

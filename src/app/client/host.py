@@ -1,3 +1,4 @@
+from typing import Callable
 from .subscriber.subscriber import Subscriber
 from .publisher.publisher import Publisher
 from ..common.broker_mode import BrokerMode
@@ -11,7 +12,8 @@ A host can be both a subscriber and publisher
 
 
 class Host:
-    def __init__(self):
+    def __init__(self, callback: Callable[[str, str], None]):
+        self.__callback = callback
         self.__subscribers: dict[str, Subscriber] = dict()
         self.__publishers: dict[str, Publisher] = dict()
         self.__broker_mode_value = None
@@ -35,12 +37,12 @@ class Host:
     def __broker_mode(self) -> BrokerMode:
         if self.__broker_mode_value is None:
             # TODO: instead of hardcoded, talk to the broker to get the BrokerMode
-            self.__broker_mode_value = BrokerMode.DIRECT
+            self.__broker_mode_value = BrokerMode.INDIRECT
         return self.__broker_mode_value
 
     @property
     def __subscriber_factory(self) -> SubscriberFactory:
-        return SubscriberFactory(self.__broker_mode)
+        return SubscriberFactory(self.__broker_mode, self.__callback)
 
     @property
     def __publisher_factory(self) -> PublisherFactory:

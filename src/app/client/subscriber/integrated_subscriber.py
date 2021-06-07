@@ -1,3 +1,4 @@
+from typing import Callable
 import zmq
 from threading import Thread
 from ...common.indirect_config import DOWNSTREAM_PORT
@@ -7,12 +8,14 @@ from .subscriber import Subscriber
 class IntegratedSubscriber(Subscriber):
     @property
     def _background_thread(self) -> Thread:
-        background_thread = BackgroundThread(self._new_sub_endpoint)
+        background_thread = BackgroundThread(
+            self._new_sub_endpoint, self._callback)
         return Thread(target=background_thread.spin)
 
 
 class BackgroundThread:
-    def __init__(self, new_sub_endpoint: str) -> None:
+    def __init__(self, new_sub_endpoint: str, callback: Callable[[str, str], None]) -> None:
+        self.__callback = callback
         self.__new_sub_endpoint = new_sub_endpoint
 
     def spin(self) -> None:
@@ -27,9 +30,8 @@ class BackgroundThread:
                     topic = receive_new_sub_socket.recv_string()
                     sub_socket.setsockopt_string(zmq.SUBSCRIBE, topic)
                 if socks.get(sub_socket) == zmq.POLLIN:
-                    [topic, msg] = sub_socket.recv_multipart()
-                    # TODO: swap for notify callback
-                    print(f'{topic}: {msg}')
+                    [topic, message] = sub_socket.recv_multipart()
+                    self.__callback(topic, message)
         except Exception as e:
             if type(e) is not zmq.ContextTerminated:
                 print('unexpected exception', e)

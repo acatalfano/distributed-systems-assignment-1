@@ -1,9 +1,13 @@
 import sys
+from typing import Callable
 from app.client.host import Host
 from time import sleep
 
 id = sys.argv[1]
-sub = Host()
+
+notify: Callable[[str, str], None] =\
+    lambda topic, message: print(f'{topic}: {message}')
+sub = Host(notify)
 sub.add_subscriber(id)
 
 if id == '4':
