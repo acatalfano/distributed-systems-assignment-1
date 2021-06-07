@@ -1,9 +1,13 @@
 import sys
+from typing import Callable
 from app.client.host import Host
 
 host_id = sys.argv[1]
 
-pub = Host()
+notify: Callable[[str, str], None] =\
+    lambda topic, message: print(f'{topic}: {message}')
+
+pub = Host(notify)
 pub.add_publisher(host_id)
 
 if host_id == '1':

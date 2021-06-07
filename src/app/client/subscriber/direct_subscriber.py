@@ -1,3 +1,4 @@
+from typing import Callable
 import zmq
 from threading import Thread
 
@@ -10,12 +11,14 @@ from ...common.direct_config import DISSEMINATE_PUB_PORT, REGISTER_SUB_PORT, BRO
 class DirectSubscriber(Subscriber):
     @property
     def _background_thread(self) -> Thread:
-        background_thread = BackgroundThread(self._new_sub_endpoint)
+        background_thread = BackgroundThread(
+            self._new_sub_endpoint, self._callback)
         return Thread(target=background_thread.run_background_thread)
 
 
 class BackgroundThread:
-    def __init__(self, new_sub_endpoint: str):
+    def __init__(self, new_sub_endpoint: str, callback: Callable[[str, str], None]):
+        self.__callback = callback
         self.__new_sub_endpoint = new_sub_endpoint
         self.__subscription_sockets: list[zmq.Socket] = []
         self.__subscribed_topics: list[str] = []
@@ -88,8 +91,7 @@ class BackgroundThread:
             for sub in self.__subscription_sockets:
                 if socks.get(sub) == zmq.POLLIN:
                     topic, message = sub.recv_multipart()
-                    # TODO: swap for notify callback
-                    print(f'{topic}: {message}')
+                    self.__callback(topic, message)
 
     def __add_sub_connection(self) -> zmq.Socket:
         new_address = self.__disseminate_pub_socket.recv_string()
