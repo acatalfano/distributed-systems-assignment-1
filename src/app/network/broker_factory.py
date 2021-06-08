@@ -1,8 +1,7 @@
 from .broker import Broker
 from .integrated_broker import IntegratedBroker
 from .direct_broker import DirectBroker
-from ..common.broker_mode import BrokerMode
-from .config import BROKER_MODE
+from ..common.broker_mode import BrokerMode, BROKER_MODE
 
 
 class BrokerFactory:

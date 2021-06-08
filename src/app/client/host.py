@@ -1,7 +1,7 @@
 from typing import Callable
 from .subscriber.subscriber import Subscriber
 from .publisher.publisher import Publisher
-from ..common.broker_mode import BrokerMode
+from ..common.broker_mode import BrokerMode, BROKER_MODE
 from .subscriber.subscriber_factory import SubscriberFactory
 from .publisher.publisher_factory import PublisherFactory
 
@@ -36,8 +36,10 @@ class Host:
     @property
     def __broker_mode(self) -> BrokerMode:
         if self.__broker_mode_value is None:
-            # TODO: instead of hardcoded, talk to the broker to get the BrokerMode
-            self.__broker_mode_value = BrokerMode.INDIRECT
+            # TODO: BROKER_MODE should be in a network-specific config,
+            # and Host should talk to the broker to get the BrokerMode
+            # implement like that if there's time
+            self.__broker_mode_value = BROKER_MODE
         return self.__broker_mode_value
 
     @property
