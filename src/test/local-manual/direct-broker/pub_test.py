@@ -1,5 +1,5 @@
 from typing import Callable
-from app.client.host import Host
+from app import Host
 import sys
 
 id = sys.argv[1]

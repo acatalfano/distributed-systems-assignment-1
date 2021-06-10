@@ -48,10 +48,6 @@ class DirectBroker(Broker):
             if socks.get(self._register_publisher_socket) == zmq.POLLIN:
                 pub_address = self._register_publisher_socket.recv_string()
                 self.__publisher_addresses.append(pub_address)
-                # TODO: generate id and reply with id
-                # TODO: hang on ^^^ do we even need the id's for anything?
-                # pub_id = uuid4().int
-                # self._register_publisher_socket.send_string(pub_id)
                 self._register_publisher_socket.send_string('')
                 self.disseminate_pub_socket.send_string(pub_address)
 

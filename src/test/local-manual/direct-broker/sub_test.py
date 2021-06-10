@@ -1,6 +1,6 @@
 import sys
 from typing import Callable
-from app.client.host import Host
+from app import Host
 from time import sleep
 
 id = sys.argv[1]

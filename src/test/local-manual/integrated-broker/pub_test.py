@@ -1,6 +1,6 @@
 import sys
 from typing import Callable
-from app.client.host import Host
+from app import Host
 
 host_id = sys.argv[1]
 

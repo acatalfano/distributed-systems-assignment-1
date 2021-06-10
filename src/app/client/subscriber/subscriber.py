@@ -15,8 +15,6 @@ class Subscriber(ABC):
         self._background_thread.start()
 
     def subscribe(self, topic: str) -> None:
-        # TODO: drop the print
-        print(f'subscribe to {topic}')
         self.__send_new_sub_socket.send_string(topic)
 
     @property

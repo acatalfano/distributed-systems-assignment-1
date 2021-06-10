@@ -12,7 +12,7 @@ A host can be both a subscriber and publisher
 
 
 class Host:
-    def __init__(self, callback: Callable[[str, str], None]):
+    def __init__(self, callback: Callable[[str, str], None] = lambda _topic, _msg: None):
         self.__callback = callback
         self.__subscribers: dict[str, Subscriber] = dict()
         self.__publishers: dict[str, Publisher] = dict()

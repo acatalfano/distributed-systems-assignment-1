@@ -25,5 +25,4 @@ class IntegratedBroker(Broker):
         try:
             zmq.proxy(self.upstream, self.downstream)
         except Exception as e:
-            print('Exiting execution, error: ', e)
             self.__del__()
